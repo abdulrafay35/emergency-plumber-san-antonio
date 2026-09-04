@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://emergency-plumber-san-antonio.com/sitemap.xml
