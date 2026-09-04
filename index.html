@@ -4418,92 +4418,93 @@ footer::before{
     });
   });
 
-  /* ---------- Lead form ---------- */
+ 
+
+    /* ---------- Lead form ---------- */
   var form = document.getElementById('leadForm');
   var phone = document.getElementById('fPhone');
 
   function formatPhone(v){
-    var d = v.replace(/\D/g,'').slice(0,10);
+    var d = (v || '').replace(/\D/g,'').slice(0,10);
     if(!d.length) return '';
     if(d.length < 4) return '(' + d;
     if(d.length < 7) return '(' + d.slice(0,3) + ') ' + d.slice(3);
     return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
   }
 
-  function fieldWrap(el){ return el ? el.closest('.field') : null; }
-  function setInvalid(el){ var w = fieldWrap(el); if(w) w.classList.add('invalid'); }
-  function clearInvalid(el){ var w = fieldWrap(el); if(w) w.classList.remove('invalid'); }
+  function fieldWrap(el){
+    return el ? el.closest('.field') : null;
+  }
+  function setInvalid(el){
+    var w = fieldWrap(el);
+    if(w) w.classList.add('invalid');
+  }
+  function clearInvalid(el){
+    var w = fieldWrap(el);
+    if(w) w.classList.remove('invalid');
+  }
 
   if(phone){
     phone.addEventListener('input', function(){
-      var before = phone.value;
       phone.value = formatPhone(phone.value);
-      if(before !== phone.value){
-        phone.setSelectionRange(phone.value.length, phone.value.length);
-      }
       clearInvalid(phone);
     });
   }
 
-  // ONLY these 4 are required
-  var requiredMap = {
-    name: document.getElementById('fName'),
-    phone: phone,
-    email: document.getElementById('fEmail'),
-    address: document.getElementById('fAddress')
-  };
+  var nameEl = document.getElementById('fName');
+  var emailEl = document.getElementById('fEmail');
+  var addressEl = document.getElementById('fAddress');
 
-  var validators = {
-    name: function(el){ return el && el.value.trim().length >= 2; },
-    phone: function(el){ return el && el.value.replace(/\D/g,'').length === 10; },
-    email: function(el){ return el && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(el.value.trim()); },
-    address: function(el){ return el && el.value.trim().length >= 5; }
-  };
+  function isNameOk(){ return !!(nameEl && nameEl.value.trim().length >= 2); }
+  function isPhoneOk(){ return !!(phone && phone.value.replace(/\D/g,'').length === 10); }
+  function isEmailOk(){ return !!(emailEl && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(emailEl.value.trim())); }
+  function isAddressOk(){ return !!(addressEl && addressEl.value.trim().length >= 5); }
 
-  Object.keys(requiredMap).forEach(function(key){
-    var el = requiredMap[key];
+  [nameEl, phone, emailEl, addressEl].forEach(function(el){
     if(!el) return;
     el.addEventListener('input', function(){ clearInvalid(el); });
     el.addEventListener('change', function(){ clearInvalid(el); });
-    el.addEventListener('blur', function(){
-      if(el.value !== '' && validators[key](el)) clearInvalid(el);
-    });
   });
 
   if(form){
     form.addEventListener('submit', function(e){
-      // honeypot bot trap only
+      // Bot honeypot: if filled, block quietly
       var trap = document.getElementById('fCompany');
-      if(trap && trap.value !== ''){
+      if(trap && trap.value.trim() !== ''){
         e.preventDefault();
         return;
       }
 
-      // validate required fields only
       var firstBad = null;
-      Object.keys(requiredMap).forEach(function(key){
-        var el = requiredMap[key];
-        if(!validators[key](el)){
-          setInvalid(el);
-          if(!firstBad) firstBad = el;
-        } else {
-          clearInvalid(el);
-        }
-      });
+
+      // Required only
+      if(!isNameOk()){ setInvalid(nameEl); if(!firstBad) firstBad = nameEl; }
+      else clearInvalid(nameEl);
+
+      if(!isPhoneOk()){ setInvalid(phone); if(!firstBad) firstBad = phone; }
+      else clearInvalid(phone);
+
+      if(!isEmailOk()){ setInvalid(emailEl); if(!firstBad) firstBad = emailEl; }
+      else clearInvalid(emailEl);
+
+      if(!isAddressOk()){ setInvalid(addressEl); if(!firstBad) firstBad = addressEl; }
+      else clearInvalid(addressEl);
+
+      // Optional fields are ignored on purpose:
+      // fPtype, fJtype, fMsg can be empty or filled
 
       if(firstBad){
-        e.preventDefault();
+        e.preventDefault(); // only block when required fields fail
         firstBad.focus();
         try{ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); }
         catch(err){ firstBad.scrollIntoView(); }
         return;
       }
 
-      // Required fields OK.
-      // Optional fields can be empty.
-      // Do not preventDefault.
-      // Do not show local success card.
-      // Browser submits to Cloudflare worker normally.
+      // IMPORTANT:
+      // Do not call e.preventDefault() here
+      // Do not show local success card here
+      // Browser will submit to form action URL
     });
   }
 
