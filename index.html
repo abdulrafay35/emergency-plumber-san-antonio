@@ -4420,10 +4420,8 @@ footer::before{
 
   /* ---------- Lead form ---------- */
   var form = document.getElementById('leadForm');
-  var okPanel = document.getElementById('formOk');
-  var loadTime = performance.now();
-
   var phone = document.getElementById('fPhone');
+
   function formatPhone(v){
     var d = v.replace(/\D/g,'').slice(0,10);
     if(!d.length) return '';
@@ -4431,98 +4429,83 @@ footer::before{
     if(d.length < 7) return '(' + d.slice(0,3) + ') ' + d.slice(3);
     return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
   }
-  phone.addEventListener('input', function(){
-    var pos = phone.selectionStart;
-    var before = phone.value;
-    phone.value = formatPhone(phone.value);
-    if(before !== phone.value && pos === before.length){
-      phone.setSelectionRange(phone.value.length, phone.value.length);
-    }
-    clearInvalid(phone);
-  });
 
-  function fieldWrap(el){ return el.closest('.field'); }
-  function setInvalid(el){ var w = fieldWrap(el); if(w){ w.classList.add('invalid'); } }
-  function clearInvalid(el){ var w = fieldWrap(el); if(w){ w.classList.remove('invalid'); } }
+  function fieldWrap(el){ return el ? el.closest('.field') : null; }
+  function setInvalid(el){ var w = fieldWrap(el); if(w) w.classList.add('invalid'); }
+  function clearInvalid(el){ var w = fieldWrap(el); if(w) w.classList.remove('invalid'); }
 
-  var validators = {
-    name:    function(el){ return el.value.trim().length >= 2; },
-    phone:   function(el){ return el.value.replace(/\D/g,'').length === 10; },
-    email:   function(el){ return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(el.value.trim()); },
-    address: function(el){ return el.value.trim().length >= 5; },
-    ptype:   function(el){ return true; }, // Optional
-    jtype:   function(el){ return true; }, // Optional
-    message: function(el){ return true; }  // Optional
-  };
-
-  var fieldMap = {
-    name:    document.getElementById('fName'),
-    phone:   phone,
-    email:   document.getElementById('fEmail'),
-    address: document.getElementById('fAddress'),
-    ptype:   document.getElementById('fPtype'),
-    jtype:   document.getElementById('fJtype'),
-    message: document.getElementById('fMsg')
-  };
-
-  Object.keys(fieldMap).forEach(function(key){
-    var el = fieldMap[key];
-    el.addEventListener('blur', function(){
-      if(el.value !== '' || el.tagName === 'SELECT'){
-        if(validators[key](el)){ clearInvalid(el); }
+  if(phone){
+    phone.addEventListener('input', function(){
+      var before = phone.value;
+      phone.value = formatPhone(phone.value);
+      if(before !== phone.value){
+        phone.setSelectionRange(phone.value.length, phone.value.length);
       }
+      clearInvalid(phone);
     });
-    el.addEventListener('change', function(){ clearInvalid(el); });
-    if(el !== phone){
-      el.addEventListener('input', function(){ clearInvalid(el); });
-    }
-  });
-
-  function showSuccess(){
-    form.classList.add('sent');
-    okPanel.focus({preventScroll:false});
-    try{ okPanel.scrollIntoView({behavior:'smooth', block:'center'}); }
-    catch(e){ okPanel.scrollIntoView(); }
   }
 
-  form.addEventListener('submit', function(e){
-    /* Bot checks */
-    var trap = document.getElementById('fCompany');
-    var tooFast = (performance.now() - loadTime) < 2500;
-    if((trap && trap.value !== '') || tooFast){
-      e.preventDefault();
-      showSuccess();
-      return;
-    }
+  // ONLY these 4 are required
+  var requiredMap = {
+    name: document.getElementById('fName'),
+    phone: phone,
+    email: document.getElementById('fEmail'),
+    address: document.getElementById('fAddress')
+  };
 
-    var firstBad = null;
-    Object.keys(fieldMap).forEach(function(key){
-      var el = fieldMap[key];
-      if(!validators[key](el)){
-        setInvalid(el);
-        if(!firstBad) firstBad = el;
-      } else {
-        clearInvalid(el);
-      }
+  var validators = {
+    name: function(el){ return el && el.value.trim().length >= 2; },
+    phone: function(el){ return el && el.value.replace(/\D/g,'').length === 10; },
+    email: function(el){ return el && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(el.value.trim()); },
+    address: function(el){ return el && el.value.trim().length >= 5; }
+  };
+
+  Object.keys(requiredMap).forEach(function(key){
+    var el = requiredMap[key];
+    if(!el) return;
+    el.addEventListener('input', function(){ clearInvalid(el); });
+    el.addEventListener('change', function(){ clearInvalid(el); });
+    el.addEventListener('blur', function(){
+      if(el.value !== '' && validators[key](el)) clearInvalid(el);
     });
-
-    if(firstBad){
-      e.preventDefault();
-      firstBad.focus();
-      try{ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); }
-      catch(err){ firstBad.scrollIntoView(); }
-      return;
-    }
-
-    var action = form.getAttribute('action') || '';
-    if(action.indexOf('http') !== 0){
-      /* No handler configured yet: show success state locally */
-      e.preventDefault();
-      showSuccess();
-    }
-    /* If a real endpoint is set, the browser submits normally to it. */
   });
 
+  if(form){
+    form.addEventListener('submit', function(e){
+      // honeypot bot trap only
+      var trap = document.getElementById('fCompany');
+      if(trap && trap.value !== ''){
+        e.preventDefault();
+        return;
+      }
+
+      // validate required fields only
+      var firstBad = null;
+      Object.keys(requiredMap).forEach(function(key){
+        var el = requiredMap[key];
+        if(!validators[key](el)){
+          setInvalid(el);
+          if(!firstBad) firstBad = el;
+        } else {
+          clearInvalid(el);
+        }
+      });
+
+      if(firstBad){
+        e.preventDefault();
+        firstBad.focus();
+        try{ firstBad.scrollIntoView({behavior:'smooth', block:'center'}); }
+        catch(err){ firstBad.scrollIntoView(); }
+        return;
+      }
+
+      // Required fields OK.
+      // Optional fields can be empty.
+      // Do not preventDefault.
+      // Do not show local success card.
+      // Browser submits to Cloudflare worker normally.
+    });
+  }
 
 
     /* ---------- Reviews Slider ---------- */
