@@ -4392,18 +4392,60 @@ footer::before{
     counters.forEach(function(c){ cio.observe(c); });
   }
 
-  /* ---------- Floating call button (appears after hero CTA leaves view) ---------- */
+  /* ---------- Floating call button ---------- */
   var floatBtn = document.getElementById('floatCall');
   var heroCta = document.getElementById('heroCta');
-  if('IntersectionObserver' in window && heroCta){
-    var io2 = new IntersectionObserver(function(entries){
-      entries.forEach(function(e){
-        floatBtn.classList.toggle('show', !e.isIntersecting);
-      });
-    }, {threshold:0});
-    io2.observe(heroCta);
-  } else {
-    floatBtn.classList.add('show');
+  var contactSec = document.getElementById('contact');
+
+  if (floatBtn) {
+    var heroGone = false;
+    var contactVisible = false;
+
+    function isMobile() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    function updateFloatBtn() {
+      // Desktop: show after hero, keep visible even on form
+      if (!isMobile()) {
+        if (heroGone) floatBtn.classList.add('show');
+        else floatBtn.classList.remove('show');
+        return;
+      }
+
+      // Mobile: show after hero, but hide while form/contact is on screen
+      if (heroGone && !contactVisible) floatBtn.classList.add('show');
+      else floatBtn.classList.remove('show');
+    }
+
+    if ('IntersectionObserver' in window) {
+      if (heroCta) {
+        var heroObs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            heroGone = !e.isIntersecting;
+            updateFloatBtn();
+          });
+        }, { threshold: 0 });
+        heroObs.observe(heroCta);
+      } else {
+        heroGone = true;
+        updateFloatBtn();
+      }
+
+      if (contactSec) {
+        var contactObs = new IntersectionObserver(function (entries) {
+          entries.forEach(function (e) {
+            contactVisible = e.isIntersecting;
+            updateFloatBtn();
+          });
+        }, { threshold: 0.15 });
+        contactObs.observe(contactSec);
+      }
+    } else {
+      floatBtn.classList.add('show');
+    }
+
+    window.addEventListener('resize', updateFloatBtn);
   }
 
   /* ---------- FAQ: close others on open (optional single-open behavior) ---------- */
