@@ -1027,6 +1027,30 @@ section{scroll-margin-top:calc(var(--head-h) + var(--ticker-h) + 24px)}
 }
 .svc-card p:not(:last-child){margin-bottom:12px}
 
+
+/* Service Card Link */
+.svc-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+  transition: gap 0.2s ease, color 0.2s ease;
+}
+.svc-card-link:hover {
+  gap: 10px;
+  color: var(--accent-dark);
+}
+.svc-card-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+
 /* Wide highlight card */
 .svc-note{
   grid-column:1/-1;
@@ -2751,6 +2775,89 @@ footer::before{
   height:1px;
   background:linear-gradient(90deg,transparent,rgba(255,138,90,.3),transparent);
 }
+
+
+
+
+
+
+
+/* ============================================================
+   SIMPLE SITEWIDE FOOTER (no page-link columns)
+============================================================ */
+.ft-simple{
+  display:grid;
+  grid-template-columns:1.1fr 1fr;
+  gap:clamp(32px,5vw,64px);
+  padding:clamp(48px,6vw,72px) 0 clamp(28px,4vw,40px);
+  align-items:start;
+}
+
+.ft-simple .ft-brand{
+  max-width:480px;
+}
+
+.ft-simple .ft-brand .logo{
+  display:inline-flex;
+  margin-bottom:18px;
+}
+
+.ft-simple .ft-brand p{
+  font-size:14.5px;
+  line-height:1.7;
+  color:#8ea2c2;
+  margin:0 0 22px;
+}
+
+.ft-resources .ft-h{
+  margin-bottom:18px;
+}
+
+/* Keep your existing .ft-reg styles; these just tighten spacing */
+.ft-simple .ft-reg li{
+  margin-bottom:14px;
+}
+
+.ft-bottom{
+  border-top:1px solid rgba(255,255,255,.08);
+  padding:20px 0 8px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px 24px;
+  justify-content:space-between;
+  align-items:center;
+  font-size:12.5px;
+  color:#8ea2c2;
+}
+
+.ft-bottom .reg-line{
+  color:#5a708f;
+}
+
+@media (max-width:800px){
+  .ft-simple{
+    grid-template-columns:1fr;
+    gap:34px;
+  }
+  .ft-bottom{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:6px;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 .ft-grid{
   display:grid;
   grid-template-columns:1.6fr 1fr 1fr 1.3fr;
